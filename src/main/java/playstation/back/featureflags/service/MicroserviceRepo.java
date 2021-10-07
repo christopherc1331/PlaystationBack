@@ -1,13 +1,21 @@
 package playstation.back.featureflags.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ResponseBody;
 import playstation.back.featureflags.model.FeatureFlag;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,56 +42,45 @@ public class MicroserviceRepo {
             HttpClient client = HttpClientBuilder.create().build();
             HttpResponse response = client.execute(new HttpGet(MICROSERVICE_FEATURE_FLAGS_FULL_PATH));
 
-            // get json from response
-            String responseBody = EntityUtils.toString(response.getEntity());
-
-            featureFlagList = parseStringToList(responseBody);
+            // get json from response and convert to feature flag list
+            ObjectMapper mapper = new ObjectMapper();
+            featureFlagList = mapper.readValue(response.getEntity().getContent(),
+                    new TypeReference<List<FeatureFlag>>() {});
         }
         catch (Exception ex) {
             throw new Exception("Error encountered when fetching the feature flags");
         }
         return featureFlagList;
     }
-    
+
     /**
-     * Helper method parses String and returns a List of feature flag objects.
+     * Takes in a feature flag object and makes a POST request to the microservice
+     * which either updates or inserts the feature flag object, and returns the full list of feature flags with the changes
      */
-    private List<FeatureFlag> parseStringToList(String listObj) throws Exception {
-        List<FeatureFlag> featureFlagList = new ArrayList<>();
+    public List<FeatureFlag> addOrUpdateFeatureFlag(FeatureFlag featureFlag) throws Exception {
+        List<FeatureFlag> featureFlagList;
 
         try {
 
-            // strip the starting/ending square brackets from response body and split by commas
-            // then remove all inconsistent quotations, as well as beginning/ending curly braces
-            List<String> resObjList = Arrays.stream(listObj
-                    .substring(1, listObj.length() - 1)
-                    .split("},"))
-                    .map(field -> field.substring(1)
-                            .replaceAll("\"","")
-                            .replaceAll("}",""))
-                    .collect(Collectors.toList());
-
-            // use jackson object mapper to map each key value pair into a JSON object ==> FeatureFlag model
-            // finally add the class object to the list of FeatureFlag objects
+            // create request
+            HttpClient client = HttpClients.createDefault();
+            HttpPost httpPost = new HttpPost(MICROSERVICE_FEATURE_FLAGS_FULL_PATH);
             ObjectMapper mapper = new ObjectMapper();
-            for (String stringObj : resObjList) {
-                JSONObject objectJson = new JSONObject();
+            String jsonString = mapper.writeValueAsString(featureFlag);
+            httpPost.setEntity(new StringEntity(jsonString));
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
 
-                String[] objFields = stringObj.split(",");
-                for (String field : objFields) {
-                    String[] fieldKeyValuePair = field.split(":");
-                    String key = fieldKeyValuePair[0];
-                    String value = fieldKeyValuePair[1];
-                    objectJson.put(key, value);
-                }
-
-                FeatureFlag featureFlag = mapper.readValue(objectJson.toString(), FeatureFlag.class);
-                featureFlagList.add(featureFlag);
-            }
+            // execute post and parse json string response into a feature flag list
+            HttpResponse response = client.execute(httpPost);
+            HttpEntity entity = response.getEntity();
+            String responseEntity = EntityUtils.toString(entity, "UTF-8");
+            featureFlagList = mapper.readValue(responseEntity, new TypeReference<List<FeatureFlag>>() {});
         }
         catch (Exception ex) {
-            throw new Exception("Error parsing string to JSON");
+            throw new Exception("Error encountered when making POST request to microservice");
         }
+
         return featureFlagList;
     }
 }
