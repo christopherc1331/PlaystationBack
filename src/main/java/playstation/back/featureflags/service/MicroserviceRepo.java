@@ -5,22 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ResponseBody;
+import playstation.back.featureflags.Dto.FeatureFlagDto;
 import playstation.back.featureflags.model.FeatureFlag;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Service class for reading from and writing to the Feature Flag microservice.
@@ -31,10 +25,10 @@ public class MicroserviceRepo {
     private static final String MICROSERVICE_FEATURE_FLAGS_FULL_PATH = "http://localhost:12300/featureflags";
 
     /**
-     * Fetches and parses a list of feature flags objects from the microservice
+     * Fetches and parses a list of feature flag DTO objects from the microservice
      */
-    public List<FeatureFlag> getFeatureFlagsFromService() throws Exception {
-        List<FeatureFlag> featureFlagList;
+    public List<FeatureFlagDto> getFeatureFlagsFromService() throws Exception {
+        List<FeatureFlagDto> featureFlagDtoList = new ArrayList<>();
 
         try {
 
@@ -45,18 +39,20 @@ public class MicroserviceRepo {
 
             // get json from response and convert to feature flag list
             ObjectMapper mapper = new ObjectMapper();
-            featureFlagList = mapper.readValue(entity.getContent(),
+            List<FeatureFlag> featureFlagList = mapper.readValue(entity.getContent(),
                     new TypeReference<List<FeatureFlag>>() {});
+
+            featureFlagList.forEach(featureFlag -> featureFlagDtoList.add(new FeatureFlagDto(featureFlag)));
         }
         catch (Exception ex) {
             throw new Exception("Error encountered when fetching the feature flags");
         }
-        return featureFlagList;
+        return featureFlagDtoList;
     }
 
     /**
      * Takes in a feature flag object and makes a POST request to the microservice
-     * which either updates or inserts the feature flag object, and returns the full list of feature flags with the changes
+     * which either updates or inserts the feature flag object, and returns the full list of feature flag DTOs with the changes
      */
     public List<FeatureFlag> addOrUpdateFeatureFlag(FeatureFlag featureFlag) throws Exception {
         List<FeatureFlag> featureFlagList;

@@ -1,6 +1,6 @@
 package playstation.back.featureflags.model;
 
-import org.apache.commons.lang.StringUtils;
+import playstation.back.featureflags.Dto.FeatureFlagDto;
 
 @SuppressWarnings("unused")
 public class FeatureFlag {
@@ -11,31 +11,25 @@ public class FeatureFlag {
 
     public FeatureFlag() {}
 
-    public String getName() {
-        return  name;
+    public FeatureFlag(FeatureFlagDto featureFlagDto) {
+        String singleString = String.join("", featureFlagDto.getValueArr());
+        value = Integer.parseInt(singleString, 2);
+        name = featureFlagDto.getName();
     }
 
-    public String[] getValue() {
-        String decimalAsBinaryString = Integer.toBinaryString(value);
-        String zeroPaddedString = StringUtils.leftPad(decimalAsBinaryString, COUNT_OF_REGIONS, "0");
-        return zeroPaddedString.split("");
+    public String getName() {
+        return name;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setValue(int value) {
-        this.value = value;
+    public int getValue() {
+        return value;
     }
 
-    /**
-     * Overloaded method for @RequestBody json --> model conversions.
-     * Will automatically take the bitarray, join them into a single string, then convert that to a binary number
-     * and set the binary (int dType) to the value field in the object.
-     */
-    public void setValue(String[] valueArr) {
-        String singleString = String.join(",", valueArr);
-        value = Integer.parseInt(singleString, 2);
+    public void setValue(int value) {
+        this.value = value;
     }
 }
