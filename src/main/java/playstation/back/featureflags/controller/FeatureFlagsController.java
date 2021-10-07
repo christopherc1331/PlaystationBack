@@ -2,16 +2,14 @@ package playstation.back.featureflags.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import playstation.back.featureflags.Dto.FeatureFlagDto;
 import playstation.back.featureflags.model.FeatureFlag;
 import playstation.back.featureflags.service.MicroserviceRepo;
 import java.util.List;
 
 @RestController
+@CrossOrigin
 public class FeatureFlagsController {
 
     private static final String MICROSERVICE_FEATURE_FLAGS_ROUTE = "featureflags";
