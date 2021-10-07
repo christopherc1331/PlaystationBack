@@ -41,10 +41,11 @@ public class MicroserviceRepo {
             // create and execute get http request
             HttpClient client = HttpClientBuilder.create().build();
             HttpResponse response = client.execute(new HttpGet(MICROSERVICE_FEATURE_FLAGS_FULL_PATH));
+            HttpEntity entity = response.getEntity();
 
             // get json from response and convert to feature flag list
             ObjectMapper mapper = new ObjectMapper();
-            featureFlagList = mapper.readValue(response.getEntity().getContent(),
+            featureFlagList = mapper.readValue(entity.getContent(),
                     new TypeReference<List<FeatureFlag>>() {});
         }
         catch (Exception ex) {
@@ -62,7 +63,7 @@ public class MicroserviceRepo {
 
         try {
 
-            // create request
+            // create post request
             HttpClient client = HttpClients.createDefault();
             HttpPost httpPost = new HttpPost(MICROSERVICE_FEATURE_FLAGS_FULL_PATH);
             ObjectMapper mapper = new ObjectMapper();
@@ -74,8 +75,7 @@ public class MicroserviceRepo {
             // execute post and parse json string response into a feature flag list
             HttpResponse response = client.execute(httpPost);
             HttpEntity entity = response.getEntity();
-            String responseEntity = EntityUtils.toString(entity, "UTF-8");
-            featureFlagList = mapper.readValue(responseEntity, new TypeReference<List<FeatureFlag>>() {});
+            featureFlagList = mapper.readValue(entity.getContent(), new TypeReference<List<FeatureFlag>>() {});
         }
         catch (Exception ex) {
             throw new Exception("Error encountered when making POST request to microservice");

@@ -39,7 +39,7 @@ public class FeatureFlagsController {
             return ResponseEntity.ok().body(featureFlagList);
         }
         catch (Exception ex) {
-            System.out.println(Arrays.toString(ex.getStackTrace()));
+            System.out.println(ex.getMessage());
 
             // 500 response in the case that an error has been caught and a successful response was not returned
             return ResponseEntity.internalServerError().body("Error occurred when fetching the feature flags.");
@@ -49,9 +49,23 @@ public class FeatureFlagsController {
     /**
      * Route for inserting and updating a feature flag.
      */
-//    @PostMapping(MICROSERVICE_FEATURE_FLAGS_ROUTE)
-//    public ResponseEntity<?> updateOrInsertFeatureFlag(@RequestBody FeatureFlag featureFlag) {
-//
-//    }
+    @PostMapping(MICROSERVICE_FEATURE_FLAGS_ROUTE)
+    public ResponseEntity<?> updateOrInsertFeatureFlag(@RequestBody FeatureFlag featureFlag) {
 
+        try {
+            if (!featureFlag.getName().trim().equals("")) {
+                List<FeatureFlag> updatedFeatureFlagList = microserviceRepo.addOrUpdateFeatureFlag(featureFlag);
+                return ResponseEntity.ok().body(updatedFeatureFlagList);
+            }
+            else {
+                throw new Exception("Invalid name passed in request");
+            }
+        }
+        catch (Exception ex) {
+            System.out.println(ex.getMessage());
+
+            // 500 response in the case that an error has been caught and a successful response was not returned
+            return ResponseEntity.badRequest().body("Error occurred when adding or updating feature flag");
+        }
+    }
 }
