@@ -9,8 +9,6 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
 import playstation.back.featureflags.model.FeatureFlag;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
