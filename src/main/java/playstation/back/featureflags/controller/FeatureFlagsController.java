@@ -48,17 +48,29 @@ public class FeatureFlagsController {
      * Route for inserting and updating a feature flag.
      */
     @PostMapping(MICROSERVICE_FEATURE_FLAGS_ROUTE)
-    public ResponseEntity<?> updateOrInsertFeatureFlag(@RequestBody FeatureFlagDto featureFlagDto) {
+    public ResponseEntity<?> updateOrInsertFeatureFlag(@RequestBody List<FeatureFlagDto> featureFlagDtoList) {
 
+        List<FeatureFlag> updatedFeatureFlagList = null;
         try {
-            if (!featureFlagDto.getName().trim().equals("")) {
-                FeatureFlag featureFlagAsModel = new FeatureFlag(featureFlagDto);
-                List<FeatureFlag> updatedFeatureFlagList = microserviceRepo.addOrUpdateFeatureFlag(featureFlagAsModel);
-                return ResponseEntity.ok().body(updatedFeatureFlagList);
+            for (int i = 0; i < featureFlagDtoList.size(); i++) {
+                FeatureFlagDto featureFlagDto = featureFlagDtoList.get(i);
+
+                if (!featureFlagDto.getName().trim().equals("")) {
+                    FeatureFlag featureFlagAsModel = new FeatureFlag(featureFlagDto);
+
+                    // if in last iteration then add response to return list, otherwise just make the post request
+                    if (i == featureFlagDtoList.size() - 1) {
+                        updatedFeatureFlagList = microserviceRepo.addOrUpdateFeatureFlag(featureFlagAsModel);
+                    }
+                    else {
+                        microserviceRepo.addOrUpdateFeatureFlag(featureFlagAsModel);
+                    }
+                }
+                else {
+                    throw new Exception("Invalid name passed in request");
+                }
             }
-            else {
-                throw new Exception("Invalid name passed in request");
-            }
+            return ResponseEntity.ok().body(updatedFeatureFlagList);
         }
         catch (Exception ex) {
             System.out.println(ex.getMessage());
